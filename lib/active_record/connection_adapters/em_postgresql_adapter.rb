@@ -1,5 +1,5 @@
 require 'active_record/connection_adapters/postgresql_adapter'
-require 'fibered_postgresql_connection'
+require 'em-postgresql-adapter/fibered_postgresql_connection'
 
 module ActiveRecord
   module ConnectionAdapters
