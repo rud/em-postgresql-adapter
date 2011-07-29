@@ -1,5 +1,11 @@
 require 'active_record/connection_adapters/postgresql_adapter'
-require 'fibered_postgresql_connection'
+require 'em-postgresql-adapter/fibered_postgresql_connection'
+
+# IMPORTANT - ActiveRecord::ConnectionAdapters::ConnectionPool is defined by loading three files:
+#   active_record/connection_adapters/abstract/connection_pool.rb (ActiveRecord gem)
+#   active_record/connection_adapters/em_postgresql_adapter.rb    (this gem, this file)
+#   em-postgres-adapter/connection_pool/<version>.rb             (this gem)
+# Where version is determined by what ActiveRecord version we're using.
 
 module ActiveRecord
   module ConnectionAdapters
@@ -50,55 +56,16 @@ module ActiveRecord
     # our own connection pool that keys off of Fiber.current so that different
     # fibers running in the same thread don't try to use the same connection.
     class ConnectionPool
-      def initialize(spec)
-        @spec = spec
 
-        # The cache of reserved connections mapped to threads
-        @reserved_connections = {}
+      # This is a partial ConnectionPool implementation, for the rest, see the
+      # ActiveRecord version specific implementation is found in em-postgresql-adapter/connection_pool/*.rb
 
-        # The mutex used to synchronize pool access
-        @connection_mutex = FiberedMonitor.new
-        @queue = @connection_mutex.new_cond
-
-        # default 5 second timeout unless on ruby 1.9
-        @timeout = spec.config[:wait_timeout] || 5
-
-        # default max pool size to 5
-        @size = (spec.config[:pool] && spec.config[:pool].to_i) || 5
-
-        @connections = []
-        @checked_out = []
-      end
-
-      def clear_stale_cached_connections!
-        cache = @reserved_connections
-        keys = Set.new(cache.keys)
-
-        ActiveRecord::ConnectionAdapters.fiber_pools.each do |pool|
-          pool.busy_fibers.each_pair do |object_id, fiber|
-            keys.delete(object_id)
-          end
-        end
-
-        keys.each do |key|
-          next unless cache.has_key?(key)
-          checkin cache[key]
-          cache.delete(key)
-        end
-      end
-
-      private
+    private
 
       def current_connection_id #:nodoc:
         Fiber.current.object_id
       end
 
-      def checkout_and_verify(c)
-        @checked_out << c
-        c.run_callbacks :checkout
-        c.verify!
-        c
-      end
     end # ConnectionPool
 
     class EMPostgreSQLAdapter < ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
@@ -143,3 +110,13 @@ module ActiveRecord
   end
 
 end # ActiveRecord
+
+# Loads a ConnectionPool implementation specific to the ActiveRecord version we're using.
+major = ActiveRecord::VERSION::MAJOR
+minor = ActiveRecord::VERSION::MINOR
+tiny  = ActiveRecord::VERSION::TINY
+if major == 2 and minor == 3
+  require "em-postgresql-adapter/connection_pool/2.3.rb"
+else
+  raise "unsupported ActiveRecord version: #{ActiveRecord::VERSION::STRING}"
+end
