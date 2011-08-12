@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
     "em-postgresql-adapter.gemspec",
     "README.md",
     "lib/active_record/connection_adapters/em_postgresql_adapter.rb",
-    "lib/fibered_postgresql_connection.rb"
+    "lib/em-postgresql-adapter/fibered_postgresql_connection.rb"
   ]
   s.add_dependency('pg', '>= 0.8.0')
 end
