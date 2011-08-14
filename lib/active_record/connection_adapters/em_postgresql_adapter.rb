@@ -115,8 +115,8 @@ end # ActiveRecord
 major = ActiveRecord::VERSION::MAJOR
 minor = ActiveRecord::VERSION::MINOR
 tiny  = ActiveRecord::VERSION::TINY
-if major == 2 and minor == 3
-  require "em-postgresql-adapter/connection_pool/2.3.rb"
-else
+begin
+  require "em-postgresql-adapter/connection_pool/#{ major }.#{ minor }.rb"
+rescue
   raise "unsupported ActiveRecord version: #{ActiveRecord::VERSION::STRING}"
 end
