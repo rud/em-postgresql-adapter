@@ -1,6 +1,6 @@
 # em-postgresql-adapter
 
-PostgreSQL fiber-based ActiveRecord connection adapter for Ruby 1.9 (compatible with Rails 3).
+PostgreSQL fiber-based ActiveRecord 3.1.x connection adapter for Ruby 1.9.
 
 NOTE: This project is unrelated to mperham's em_postgresql <https://github.com/mperham/em_postgresql>.
 
