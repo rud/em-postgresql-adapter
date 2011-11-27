@@ -11,13 +11,19 @@ Edit your Gemfile:
     gem 'pg'
     gem 'em-postgresql-adapter', :git => 'git://github.com/leftbee/em-postgresql-adapter.git'
     gem 'rack-fiber_pool',  :require => 'rack/fiber_pool'
+    gem 'em-synchrony', :git     => 'git://github.com/igrigorik/em-synchrony.git',
+                        :require => ['em-synchrony',
+                                     'em-synchrony/em-http',
+                                     'em-synchrony/activerecord']
 
-Then edit your environment (i.e., production.rb, staging.rb, etc.) and make sure threadsafe! is enabled:
+Then edit your environment (i.e., production.rb, staging.rb, etc.) and make sure threadsafe! is enabled.
+Also make sure to install the Rack::FiberPool middleware as early in the stack as possible:
 
     MyRails3App::Application.configure do
-      ...
+      # ...
+      config.middleware.insert_before ActionDispatch::ShowExceptions, Rack::FiberPool
       config.threadsafe!
-      ...
+      # ...
     end
 
 And finally, edit your config/database.yml:
