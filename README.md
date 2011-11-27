@@ -13,7 +13,6 @@ Edit your Gemfile:
     gem 'rack-fiber_pool',  :require => 'rack/fiber_pool'
     gem 'em-synchrony', :git     => 'git://github.com/igrigorik/em-synchrony.git',
                         :require => ['em-synchrony',
-                                     'em-synchrony/em-http',
                                      'em-synchrony/activerecord']
 
 Then edit your environment (i.e., production.rb, staging.rb, etc.) and make sure threadsafe! is enabled.
