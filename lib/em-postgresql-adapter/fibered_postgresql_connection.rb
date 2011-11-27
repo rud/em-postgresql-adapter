@@ -4,6 +4,8 @@ require 'pg'
 
 module EM
   module DB
+    # Patching our PGConn-based class to wrap async_exec (alias for async_query) calls into Ruby Fibers
+    # ActiveRecord 3.1 calls PGConn#async_exec and also PGConn#send_query_prepared (the latter hasn't been patched here yet -- see below)
     class FiberedPostgresConnection < PGconn
 
       module Watcher
@@ -31,7 +33,7 @@ module EM
         end
       end
 
-      def exec(sql)
+      def async_exec(sql)
         if ::EM.reactor_running?
           send_query sql
           deferrable = ::EM::DefaultDeferrable.new
@@ -50,8 +52,12 @@ module EM
           super(sql)
         end
       end
+      alias_method :async_query, :async_exec
 
-      alias_method :query, :exec
+      # TODO: Figure out whether patching PGConn#send_query_prepared will have a noticeable effect and implement accordingly
+      # NOTE: ActiveRecord 3.1 calls PGConn#send_query_prepared from ActiveRecord::ConnectionAdapters::PostgreSQLAdapter#exec_cache.
+      # def send_query_prepared(statement_name, *params)
+      # end
 
     end #FiberedPostgresConnection
   end #DB
