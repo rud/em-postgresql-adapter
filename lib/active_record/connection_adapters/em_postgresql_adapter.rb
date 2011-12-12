@@ -1,3 +1,4 @@
+require 'em-synchrony/activerecord'
 require 'active_record/connection_adapters/abstract_adapter'
 require 'active_record/connection_adapters/postgresql_adapter'
 require 'em-postgresql-adapter/fibered_postgresql_connection'
@@ -9,19 +10,23 @@ end
 module ActiveRecord
   module ConnectionAdapters
     class EMPostgreSQLAdapter < ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
-      # Returns 'FiberedPostgreSQL' as adapter name for identification purposes.
-      def adapter_name
-        'EMPostgreSQL'
+      class Client < ::EM::DB::FiberedPostgresConnection
+        include EM::Synchrony::ActiveRecord::Client
       end
+
+      class ConnectionPool < EM::Synchrony::ConnectionPool
+        # via method_missing async_exec will be recognized as async method
+        def async_exec(*args, &blk)
+          execute(false) do |conn|
+            conn.send(:async_exec, *args, &blk)
+          end
+        end
+      end
+
+      include EM::Synchrony::ActiveRecord::Adapter
 
       def connect
-        @connection = ::EM::DB::FiberedPostgresConnection.connect(*@connection_parameters[1..(@connection_parameters.length-1)])
-      end
-
-      # Close then reopen the connection.
-      def reconnect!
-        disconnect!
-        connect
+        @connection
       end
     end
   end # ConnectionAdapters
@@ -34,17 +39,19 @@ module ActiveRecord
       port     = config[:port] || 5432
       username = config[:username].to_s
       password = config[:password].to_s
-      size     = config[:connections] || 4
 
       if config.has_key?(:database)
         database = config[:database]
       else
         raise ArgumentError, "No database specified. Missing argument: database."
       end
+      adapter = ActiveRecord::ConnectionAdapters::EMPostgreSQLAdapter
+      options = [host, port, nil, nil, database, username, password]
 
-      # The postgres drivers don't allow the creation of an unconnected PGconn object,
-      # so just pass a nil connection object for the time being.
-      ::ActiveRecord::ConnectionAdapters::EMPostgreSQLAdapter.new(nil, logger, [size, host, port, nil, nil, database, username, password], config)
+      client = adapter::ConnectionPool.new(size: config[:pool]) do
+        adapter::Client.connect(*options)
+      end 
+      adapter.new(client, logger, options, config)
     end
   end
 
