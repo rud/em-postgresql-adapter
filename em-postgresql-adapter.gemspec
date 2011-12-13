@@ -1,6 +1,9 @@
+$:.push File.expand_path("../lib", __FILE__)
+require "em-postgresql-adapter/version"
+
 Gem::Specification.new do |s|
   s.name     = "em-postgresql-adapter"
-  s.version  = "0.2"
+  s.version  = EmPostgresqlAdapter::VERSION
   s.date     = "2011-11-27"
   s.summary  = "PostgreSQL fiber-based ActiveRecord 3.1 connection adapter for Ruby 1.9"
   s.email    = "ruben@leftbee.net"
