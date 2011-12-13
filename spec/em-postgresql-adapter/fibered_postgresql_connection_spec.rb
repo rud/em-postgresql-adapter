@@ -43,8 +43,6 @@ describe EM::DB::FiberedPostgresConnection, 'integration with active_record insi
     start = Time.now
     results = []
     em {
-      EM::PeriodicTimer.new(0.01) { print "." }
-
       Fiber.new {
         results << ActiveRecord::Base.connection.execute("SELECT pg_sleep(#{SLEEP_TIME}), 42").values
         done if results.length == 2
