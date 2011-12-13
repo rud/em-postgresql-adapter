@@ -2,3 +2,4 @@ test:
   adapter: em_postgresql
   username: YOUR_USER_HERE
   database: template1
+  pool: 2
