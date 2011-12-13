@@ -18,4 +18,5 @@ Gem::Specification.new do |s|
     'LICENSE*'] & `git ls-files -z`.split("\0")
   s.add_dependency('pg', '>= 0.8.0')
   s.add_dependency('activerecord', '>= 3.1.0')
+  s.add_dependency('eventmachine')
 end
