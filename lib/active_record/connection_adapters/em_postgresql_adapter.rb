@@ -32,6 +32,8 @@ module ActiveRecord
   end # ConnectionAdapters
 
   class Base
+    DEFAULT_POOL_SIZE = 5
+
     # Establishes a connection to the database that's used by all Active Record objects
     def self.em_postgresql_connection(config) # :nodoc:
       config = config.symbolize_keys
@@ -39,6 +41,7 @@ module ActiveRecord
       port     = config[:port] || 5432
       username = config[:username].to_s
       password = config[:password].to_s
+      poolsize = config[:pool] || DEFAULT_POOL_SIZE
 
       if config.has_key?(:database)
         database = config[:database]
@@ -48,7 +51,7 @@ module ActiveRecord
       adapter = ActiveRecord::ConnectionAdapters::EMPostgreSQLAdapter
       options = [host, port, nil, nil, database, username, password]
 
-      client = adapter::ConnectionPool.new(size: config[:pool]) do
+      client = adapter::ConnectionPool.new(size: poolsize) do
         adapter::Client.connect(*options)
       end 
       adapter.new(client, logger, options, config)
